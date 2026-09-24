@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SecureAuth</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="auth-container">
+    <div class="auth-box">
+
+        <h1>SecureAuth</h1>
+        <p>Login to your account</p>
+
+        <form id="loginForm">
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email Address"
+                required
+            >
+
+            <div class="password-wrapper">
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Password"
+                    minlength="6"
+                    required
+                >
+
+                <button
+                    type="button"
+                    id="togglePassword"
+                    class="toggle-btn"
+                >
+                    Show
+                </button>
+            </div>
+
+            <button type="submit" id="loginBtn">
+                Login
+            </button>
+
+        </form>
+
+        <p id="message"></p>
+
+        <p class="switch">
+            Don't have an account?
+            <a href="signup.html">Create Account</a>
+        </p>
+
+    </div>
+</div>
+
+<script>
+
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+const loginBtn = document.getElementById("loginBtn");
+
+const password = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
+
+
+// Show / Hide password
+togglePassword.addEventListener("click", () => {
+
+    if (password.type === "password") {
+        password.type = "text";
+        togglePassword.textContent = "Hide";
+    } else {
+        password.type = "password";
+        togglePassword.textContent = "Show";
+    }
+
+});
+
+
+// Login
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const passwordValue = password.value;
+
+    message.textContent = "";
+
+    // Validation
+    if (!email.includes("@")) {
+        message.textContent = "Please enter a valid email";
+        return;
+    }
+
+    if (passwordValue.length < 6) {
+        message.textContent =
+            "Password must be at least 6 characters";
+        return;
+    }
+
+    // Loading state
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in...";
+
+    try {
+
+        const response = await fetch(
+            "http://localhost:5000/api/auth/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email,
+                    password: passwordValue
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            localStorage.setItem("token", data.token);
+            localStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
+
+            message.style.color = "#16a34a";
+            message.textContent = "Login successful!";
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 500);
+
+        } else {
+
+            message.style.color = "#dc2626";
+            message.textContent =
+                data.message || "Login failed";
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Login";
+        }
+
+    } catch (error) {
+
+        message.style.color = "#dc2626";
+        message.textContent =
+            "Unable to connect to server";
+
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
+    }
+
+});
+
+</script>
+
+</body>
+</html>

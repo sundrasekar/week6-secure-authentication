@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SecureAuth</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="auth-container">
+    <div class="auth-box dashboard-box">
+
+        <h1>Dashboard</h1>
+
+        <p id="welcomeMessage">Loading...</p>
+
+        <div class="user-details">
+            <p>
+                <strong>Name:</strong>
+                <span id="userName">Loading...</span>
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                <span id="userEmail">Loading...</span>
+            </p>
+        </div>
+
+        <button id="logoutBtn">Logout</button>
+
+    </div>
+</div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+
+// No token = not logged in
+if (!token) {
+    window.location.href = "index.html";
+}
+
+
+// Get protected user profile
+async function loadProfile() {
+
+    try {
+
+        const response = await fetch(
+            "http://localhost:5000/api/auth/profile",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json();
+
+
+        // Invalid / expired token
+        if (!response.ok || !data.success) {
+
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+
+            window.location.href = "index.html";
+
+            return;
+        }
+
+
+        // Display database user information
+        document.getElementById("welcomeMessage").textContent =
+            `Welcome, ${data.user.name}!`;
+
+        document.getElementById("userName").textContent =
+            data.user.name;
+
+        document.getElementById("userEmail").textContent =
+            data.user.email;
+
+    }
+
+    catch (error) {
+
+        document.getElementById("welcomeMessage").textContent =
+            "Unable to connect to server";
+
+    }
+}
+
+
+// Logout
+document.getElementById("logoutBtn").addEventListener(
+    "click",
+    () => {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        window.location.href = "index.html";
+
+    }
+);
+
+
+loadProfile();
+
+</script>
+
+</body>
+</html>
